@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Nexo Chat</title>
+
+<style>
+body{
+    margin:0;
+    font-family:sans-serif;
+    background:#313338;
+    color:white;
+    display:flex;
+    height:100vh;
+}
+
+/* servidores */
+.servers{
+    width:70px;
+    background:#1e1f22;
+}
+
+/* canales */
+.channels{
+    width:220px;
+    background:#2b2d31;
+    padding:10px;
+}
+
+/* chat */
+.chat{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+}
+
+/* mensajes */
+#messages{
+    list-style:none;
+    padding:20px;
+    margin:0;
+    flex:1;
+    overflow-y:auto;
+}
+
+/* input area */
+.input-area{
+    background:#383a40;
+    padding:15px;
+    display:flex;
+}
+
+#input{
+    flex:1;
+    padding:10px;
+    font-size:16px;
+    border:none;
+    border-radius:6px;
+}
+
+button{
+    margin-left:10px;
+    padding:10px 15px;
+    border:none;
+    border-radius:6px;
+    background:#5865f2;
+    color:white;
+    cursor:pointer;
+}
+
+li{
+    margin-bottom:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="servers"></div>
+
+<div class="channels">
+<b>Nexo</b>
+<p># general</p>
+</div>
+
+<div class="chat">
+
+<ul id="messages"></ul>
+
+<div class="input-area">
+<input id="input" placeholder="Mensaje en #general" autocomplete="off" onkeydown="handleKey(event)">
+<button onclick="sendMessage()">Enviar</button>
+</div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+const socket = io();
+
+let username = prompt("Elegí tu nombre:");
+
+if(!username || username.trim()===""){
+    username="Usuario"+Math.floor(Math.random()*1000);
+}
+
+// avisar al server que entramos
+socket.emit("join", username);
+
+function sendMessage(){
+    const input=document.getElementById("input");
+    const message=input.value;
+
+    if(message){
+        socket.emit("chat message",{
+            user:username,
+            text:message
+        });
+        input.value="";
+    }
+}
+
+function handleKey(e){
+    if(e.key==="Enter") sendMessage();
+}
+
+// mensaje normal
+socket.on("chat message",function(data){
+    const li=document.createElement("li");
+    li.innerHTML="<b>"+data.user+"</b>: "+data.text;
+    document.getElementById("messages").appendChild(li);
+});
+
+// mensaje sistema
+socket.on("system message",function(msg){
+    const li=document.createElement("li");
+    li.style.color="#aaa";
+    li.style.fontStyle="italic";
+    li.textContent=msg;
+    document.getElementById("messages").appendChild(li);
+});
+</script>

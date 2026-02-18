@@ -1,0 +1,34 @@
+const express = require("express");
+const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+app.use(express.static(path.join(__dirname, "client")));
+
+io.on("connection", (socket) => {
+
+  // recibir nombre del usuario
+  socket.on("join", (username) => {
+    socket.username = username;
+    io.emit("system message", username + " se unió al chat");
+  });
+
+  socket.on("chat message", (data) => {
+    io.emit("chat message", data);
+  });
+
+  socket.on("disconnect", () => {
+    if(socket.username){
+      io.emit("system message", socket.username + " salió del chat");
+    }
+  });
+
+});
+
+server.listen(3000, () => {
+  console.log("Servidor corriendo en http://localhost:3000");
+});

@@ -96,8 +96,6 @@ li{
 
 </div>
 
-<div id="escribiendo" style="font-style: italic; color: gray;"></div>
-
 <div class="users" style="width:200px;background:#2b2d31;padding:10px;">
 <b>Conectados</b>
 <ul id="users"></ul>
@@ -178,6 +176,11 @@ function changeName(){
 
 // mensaje normal
 socket.on("chat message",function(data){
+    if(typingLi){
+        typingLi.remove();
+        typingLi=null;
+    }
+
     const li=document.createElement("li");
     const name=document.createElement("b");
     name.textContent=data.user+": ";
@@ -212,26 +215,37 @@ socket.on("user list", function(users){
     });
 });
 
-// indicador de escritura
+let typingLi = null;
+
 const mensajeInput = document.getElementById("input");
 let escribiendoTimeout;
 
 mensajeInput.addEventListener("input", () => {
-    socket.emit("escribiendo", username);
+        socket.emit("escribiendo", username);
 
-    clearTimeout(escribiendoTimeout);
+        clearTimeout(escribiendoTimeout);
 
-    escribiendoTimeout = setTimeout(() => {
-        socket.emit("dejoDeEscribir");
-    }, 1000);
+        escribiendoTimeout = setTimeout(() => {
+                socket.emit("dejoDeEscribir");
+        }, 1000);
 });
 
 socket.on("escribiendo", (nombre) => {
-  document.getElementById("escribiendo").textContent =
-    nombre + " está escribiendo...";
+    if(typingLi) typingLi.remove();
+
+    typingLi = document.createElement("li");
+    typingLi.id = "typing";
+    typingLi.style.color = "#aaa";
+    typingLi.style.fontStyle = "italic";
+    typingLi.textContent = nombre + " está escribiendo...";
+
+    document.getElementById("messages").appendChild(typingLi);
 });
 
 socket.on("dejoDeEscribir", () => {
-  document.getElementById("escribiendo").textContent = "";
+    if(typingLi){
+        typingLi.remove();
+        typingLi = null;
+    }
 });
 </script>

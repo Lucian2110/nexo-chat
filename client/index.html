@@ -202,9 +202,9 @@ li{
 <div class="channels">
 <b>Nexo</b>
 <button onclick="changeName()">Cambiar nombre</button>
-    <p onclick="switchChannel('general')"># general</p>
-    <p onclick="switchChannel('gaming')"># gaming</p>
-    <p onclick="switchChannel('tareas')"># tareas</p>
+    <p data-channel="general" onclick="switchChannel('general')"># general</p>
+    <p data-channel="gaming" onclick="switchChannel('gaming')"># gaming</p>
+    <p data-channel="tareas" onclick="switchChannel('tareas')"># tareas</p>
 </div>
 
 <div class="chat">
@@ -315,20 +315,21 @@ function switchChannel(channel){
 
     socket.emit("switch channel", channel);
 
-    // actualizar texto arriba (ARREGLA EL TELEFONO)
-    const topSpan = document.querySelector(".topbar span");
-    if(topSpan) topSpan.textContent = "# " + channel;
+    // TOPBAR
+    const span=document.querySelector(".topbar span");
+    if(span) span.textContent="# "+channel;
 
-    // actualizar placeholder
-    document.getElementById("input").placeholder = "Mensaje en #" + channel;
+    // PLACEHOLDER
+    document.getElementById("input").placeholder="Mensaje en #"+channel;
 
-    // ===== marcar canal activo =====
+    // MARCAR ACTIVO (forma correcta)
     document.querySelectorAll(".channels p").forEach(p=>{
-        p.classList.remove("active");
+        if(p.dataset.channel===channel){
+            p.classList.add("active");
+        }else{
+            p.classList.remove("active");
+        }
     });
-
-    const active = document.querySelector(`.channels p[onclick="switchChannel('${channel}')"]`);
-    if(active) active.classList.add("active");
 
     // cerrar menú móvil
     document.querySelector(".channels").classList.remove("open");
@@ -386,12 +387,14 @@ mensajeInput.addEventListener("input", () => {
 
 const typingDiv = document.getElementById("typing-indicator");
 
-socket.on("escribiendo", (nombre)=>{
-    typingDiv.textContent = nombre + " está escribiendo...";
+socket.on("escribiendo", (data)=>{
+    if(data.channel!==currentChannel) return;
+    typingDiv.textContent = data.nombre + " está escribiendo...";
 });
 
-socket.on("dejoDeEscribir", ()=>{
-    typingDiv.textContent = "";
+socket.on("dejoDeEscribir", (channel)=>{
+    if(channel!==currentChannel) return;
+    typingDiv.textContent="";
 });
 
 function toggleMenu(){

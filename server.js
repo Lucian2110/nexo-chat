@@ -55,6 +55,20 @@ io.on("connection", (socket) => {
 
   });
 
+  // escribiendo (typing) events per channel
+  socket.on("escribiendo", (nombre) => {
+    const channel = socket.channel || "general";
+    socket.broadcast.emit("escribiendo", {
+      nombre,
+      channel,
+    });
+  });
+
+  socket.on("dejoDeEscribir", () => {
+    const channel = socket.channel || "general";
+    socket.broadcast.emit("dejoDeEscribir", channel);
+  });
+
 
   socket.on("chat message",(data)=>{
 

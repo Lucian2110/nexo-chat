@@ -35,6 +35,14 @@ io.on("connection", (socket) => {
     sendUserList();
   });
 
+  socket.on("escribiendo", (nombre) => {
+    socket.broadcast.emit("escribiendo", nombre);
+  });
+
+  socket.on("dejoDeEscribir", () => {
+    socket.broadcast.emit("dejoDeEscribir");
+  });
+
   socket.on("chat message", (data) => {
     io.emit("chat message", data);
   });

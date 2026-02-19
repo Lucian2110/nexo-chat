@@ -96,6 +96,8 @@ li{
 
 </div>
 
+<div id="escribiendo" style="font-style: italic; color: gray;"></div>
+
 <div class="users" style="width:200px;background:#2b2d31;padding:10px;">
 <b>Conectados</b>
 <ul id="users"></ul>
@@ -208,5 +210,28 @@ socket.on("user list", function(users){
         li.textContent=u;
         ul.appendChild(li);
     });
+});
+
+// indicador de escritura
+const mensajeInput = document.getElementById("input");
+let escribiendoTimeout;
+
+mensajeInput.addEventListener("input", () => {
+    socket.emit("escribiendo", username);
+
+    clearTimeout(escribiendoTimeout);
+
+    escribiendoTimeout = setTimeout(() => {
+        socket.emit("dejoDeEscribir");
+    }, 1000);
+});
+
+socket.on("escribiendo", (nombre) => {
+  document.getElementById("escribiendo").textContent =
+    nombre + " está escribiendo...";
+});
+
+socket.on("dejoDeEscribir", () => {
+  document.getElementById("escribiendo").textContent = "";
 });
 </script>

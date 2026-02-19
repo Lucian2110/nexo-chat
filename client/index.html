@@ -70,7 +70,12 @@ body{
     }
 
     .channels{
-        display:none;
+        position:fixed;
+        left:-240px;
+        top:0;
+        height:100%;
+        z-index:1000;
+        transition:.3s;
     }
 
     body{
@@ -198,6 +203,8 @@ li{
 
 <ul id="messages"></ul>
 
+<div id="typing-indicator" style="padding:8px 20px;color:#aaa;font-style:italic;"></div>
+
 <div class="input-area">
 <input id="input" placeholder="Mensaje en #general" autocomplete="off" onkeydown="handleKey(event)">
 <button onclick="sendMessage()">Enviar</button>
@@ -318,8 +325,6 @@ socket.on("user list", function(users){
     });
 });
 
-let typingLi = null;
-
 const mensajeInput = document.getElementById("input");
 let escribiendoTimeout;
 
@@ -333,23 +338,14 @@ mensajeInput.addEventListener("input", () => {
         }, 1000);
 });
 
-socket.on("escribiendo", (nombre) => {
-    if(typingLi) typingLi.remove();
+const typingDiv = document.getElementById("typing-indicator");
 
-    typingLi = document.createElement("li");
-    typingLi.id = "typing";
-    typingLi.style.color = "#aaa";
-    typingLi.style.fontStyle = "italic";
-    typingLi.textContent = nombre + " está escribiendo...";
-
-    document.getElementById("messages").appendChild(typingLi);
+socket.on("escribiendo", (nombre)=>{
+    typingDiv.textContent = nombre + " está escribiendo...";
 });
 
-socket.on("dejoDeEscribir", () => {
-    if(typingLi){
-        typingLi.remove();
-        typingLi = null;
-    }
+socket.on("dejoDeEscribir", ()=>{
+    typingDiv.textContent = "";
 });
 
 function toggleMenu(){
@@ -378,3 +374,6 @@ socket.on("chat history", function(history){
     ul.scrollTop=ul.scrollHeight;
 });
 </script>
+
+</body>
+</html>

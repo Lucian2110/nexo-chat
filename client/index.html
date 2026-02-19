@@ -231,7 +231,7 @@ li{
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>let currentChannel = "general";</script>
+<script>let currentChannel = "general"; const unread={}; const audio=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");</script>
 
 <script>
 const socket = io();
@@ -331,6 +331,15 @@ function switchChannel(channel){
         }
     });
 
+    // limpiar badge de no leídos
+    unread[channel]=0;
+    document.querySelectorAll(".channels p").forEach(p=>{
+        const ch=p.dataset.channel;
+        if(ch===channel){
+            p.textContent="# "+ch;
+        }
+    });
+
     // cerrar menú móvil
     document.querySelector(".channels").classList.remove("open");
 
@@ -338,7 +347,23 @@ function switchChannel(channel){
 
 // mensaje normal
 socket.on("chat message",function(data){
-    if(data.channel!==currentChannel) return;
+
+    if(data.channel!==currentChannel){
+
+        unread[data.channel]=(unread[data.channel]||0)+1;
+
+        // badge visual
+        document.querySelectorAll(".channels p").forEach(p=>{
+            if(p.dataset.channel===data.channel){
+                p.textContent="# "+data.channel+" ("+unread[data.channel]+")";
+            }
+        });
+
+        // sonido
+        audio.play().catch(()=>{});
+        return;
+    }
+
     const li=document.createElement("li");
 
     if(data.user===username){
@@ -350,6 +375,7 @@ socket.on("chat message",function(data){
 
     document.getElementById("messages").appendChild(li);
     li.scrollIntoView();
+
 });
 
 // mensaje sistema
@@ -361,15 +387,19 @@ socket.on("system message",function(msg){
 });
 
 // lista de usuarios conectados
-socket.on("user list", function(users){
+socket.on("user list", function(porCanal){
+
     const ul=document.getElementById("users");
     ul.innerHTML="";
 
-    users.forEach(u=>{
+    const lista = porCanal[currentChannel] || [];
+
+    lista.forEach(u=>{
         const li=document.createElement("li");
         li.textContent=u;
         ul.appendChild(li);
     });
+
 });
 
 const mensajeInput = document.getElementById("input");

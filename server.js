@@ -15,44 +15,61 @@ const channels = {
   tareas: []
 };
 
-const usuarios = {};
+const usuarios = {}; // socket.id -> {name, channel}
+
+function enviarUsuarios(){
+
+  const porCanal = {};
+
+  Object.values(usuarios).forEach(u=>{
+    if(!porCanal[u.channel]) porCanal[u.channel]=[];
+    porCanal[u.channel].push(u.name);
+  });
+
+  io.emit("user list",porCanal);
+
+}
 
 io.on("connection", (socket) => {
 
-  socket.on("join", (username)=>{
+  socket.on("join",(username)=>{
 
-    username = username.trim();
+    username=username.trim();
 
-    const nombreEnUso = Object.values(usuarios).includes(username);
-    const anterior = usuarios[socket.id];
+    const nombreEnUso = Object.values(usuarios).some(u=>u.name===username);
+    const anterior = usuarios[socket.id]?.name;
 
     if(nombreEnUso && anterior!==username){
       socket.emit("name taken");
       return;
     }
 
-    if(!anterior){
-      usuarios[socket.id]=username;
+    if(!usuarios[socket.id]){
+      usuarios[socket.id]={name:username,channel:"general"};
       io.emit("system message", username+" se unió al chat");
-    } else if(anterior!==username){
-      usuarios[socket.id]=username;
+    }else if(anterior!==username){
+      usuarios[socket.id].name=username;
       io.emit("system message", anterior+" ahora se llama "+username);
     }
 
-    socket.emit("join success", username);
-    io.emit("user list", Object.values(usuarios));
+    socket.emit("join success",username);
+
+    enviarUsuarios();
   });
 
 
   // cambiar canal
   socket.on("switch channel",(channel)=>{
 
-    socket.channel = channel;
+    if(!usuarios[socket.id]) return;
 
-    const history = channels[channel] || [];
+    usuarios[socket.id].channel=channel;
+    socket.channel=channel;
 
-    socket.emit("chat history", history);
+    const history=channels[channel]||[];
+    socket.emit("chat history",history);
 
+    enviarUsuarios();
   });
 
   // escribiendo (typing) events per channel

@@ -111,6 +111,50 @@ button{
 li{
     margin-bottom:10px;
 }
+
+/* topbar + mobile menu */
+.topbar{
+    display:none;
+    background:#2b2d31;
+    padding:12px;
+    font-size:20px;
+}
+
+.menu-btn{
+    background:none;
+    border:none;
+    color:white;
+    font-size:24px;
+    margin-right:10px;
+    cursor:pointer;
+}
+
+/* ===== MOVIL TOPBAR ===== */
+@media (max-width:700px){
+
+    .topbar{
+        display:flex;
+        align-items:center;
+    }
+
+    .servers{
+        display:none;
+    }
+
+    .channels{
+        position:fixed;
+        left:-240px;
+        top:0;
+        height:100%;
+        z-index:1000;
+        transition:.3s;
+    }
+
+    .channels.open{
+        left:0;
+    }
+
+}
 </style>
 
 </head>
@@ -126,6 +170,11 @@ li{
 </div>
 
 <div class="chat">
+
+<div class="topbar">
+<button class="menu-btn" onclick="toggleMenu()">☰</button>
+<span># general</span>
+</div>
 
 <ul id="messages"></ul>
 
@@ -288,4 +337,8 @@ socket.on("dejoDeEscribir", () => {
         typingLi = null;
     }
 });
+
+function toggleMenu(){
+    document.querySelector(".channels").classList.toggle("open");
+}
 </script>

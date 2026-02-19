@@ -331,47 +331,47 @@ function changeName(){
     }
 }
 
+function renderMessage(data, isCurrentUser){
+    const li = document.createElement("li");
+    if(isCurrentUser){
+        li.classList.add("me");
+        li.textContent = data.text;
+    }else{
+        const userSpan = document.createElement("b");
+        userSpan.textContent = data.user;
+        li.appendChild(userSpan);
+        li.appendChild(document.createElement("br"));
+        li.appendChild(document.createTextNode(data.text));
+    }
+    return li;
+}
+
 function switchChannel(channel){
 
     currentChannel = channel;
 
-    // limpiar contador de no leídos al entrar
-    unread[channel]=0;
+    // un único forEach: limpiar unread + marcar activo
+    unread[channel] = 0;
     document.querySelectorAll(".channels p").forEach(p=>{
-        const ch=p.dataset.channel;
-        if(ch===channel){
-            p.textContent="# "+ch;
-        }
-    });
-
-    document.getElementById("messages").innerHTML="";
-
-    socket.emit("switch channel", channel);
-
-    // TOPBAR
-    const span=document.querySelector(".topbar span");
-    if(span) span.textContent="# "+channel;
-
-    // PLACEHOLDER
-    document.getElementById("input").placeholder="Mensaje en #"+channel;
-
-    // MARCAR ACTIVO (forma correcta)
-    document.querySelectorAll(".channels p").forEach(p=>{
-        if(p.dataset.channel===channel){
+        const ch = p.dataset.channel;
+        if(ch === channel){
+            p.textContent = "# " + ch;
             p.classList.add("active");
         }else{
             p.classList.remove("active");
         }
     });
 
-    // limpiar badge de no leídos
-    unread[channel]=0;
-    document.querySelectorAll(".channels p").forEach(p=>{
-        const ch=p.dataset.channel;
-        if(ch===channel){
-            p.textContent="# "+ch;
-        }
-    });
+    document.getElementById("messages").innerHTML = "";
+
+    socket.emit("switch channel", channel);
+
+    // TOPBAR
+    const span = document.querySelector(".topbar span");
+    if(span) span.textContent = "# " + channel;
+
+    // PLACEHOLDER
+    document.getElementById("input").placeholder = "Mensaje en #" + channel;
 
     // cerrar menú móvil
     document.querySelector(".channels").classList.remove("open");
@@ -392,7 +392,6 @@ socket.on("chat message",function(data){
 
         document.querySelectorAll(".channels p").forEach(p=>{
             const ch=p.dataset.channel;
-
             if(ch===data.channel){
                 p.textContent="# "+ch+" ("+unread[ch]+")";
             }
@@ -402,15 +401,7 @@ socket.on("chat message",function(data){
         return;
     }
 
-    const li=document.createElement("li");
-
-    if(data.user===username){
-        li.classList.add("me");
-        li.innerHTML=data.text;
-    }else{
-        li.innerHTML="<b>"+data.user+"</b><br>"+data.text;
-    }
-
+    const li = renderMessage(data, data.user === username);
     document.getElementById("messages").appendChild(li);
     li.scrollIntoView();
 });
@@ -487,15 +478,7 @@ socket.on("chat history", function(history){
     ul.innerHTML="";
 
     history.forEach(data=>{
-        const li=document.createElement("li");
-
-        if(data.user===username){
-            li.classList.add("me");
-            li.innerHTML=data.text;
-        }else{
-            li.innerHTML="<b>"+data.user+"</b><br>"+data.text;
-        }
-
+        const li = renderMessage(data, data.user === username);
         ul.appendChild(li);
     });
 

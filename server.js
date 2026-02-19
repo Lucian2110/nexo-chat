@@ -9,22 +9,30 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, "client")));
 
-// guardar historial en memoria
 const messages = [];
-
 const usuarios = {};   // socket.id -> username
 
 io.on("connection", (socket) => {
 
-  // enviar historial al nuevo usuario
   socket.emit("chat history", messages);
 
   socket.on("join", (username) => {
 
+    username = username.trim();
+
+    // ❗ verificar si nombre ya existe en OTRO socket
+    const nombreEnUso = Object.values(usuarios).includes(username);
+
     const nombreAnterior = usuarios[socket.id];
 
-    // si ya tenía nombre → es cambio de nombre
-    if(nombreAnterior){
+    // si el nombre está en uso por otro usuario → bloquear
+    if(nombreEnUso && nombreAnterior !== username){
+      socket.emit("name taken");
+      return;
+    }
+
+    // cambio de nombre
+    if(nombreAnterior && nombreAnterior !== username){
 
       usuarios[socket.id] = username;
 
@@ -32,41 +40,45 @@ io.on("connection", (socket) => {
         nombreAnterior + " ahora se llama " + username
       );
 
-    }else{
+    }
+    // usuario nuevo
+    else if(!nombreAnterior){
 
       usuarios[socket.id] = username;
 
       io.emit("system message",
         username + " se unió al chat"
       );
+
     }
 
-    // enviar lista actualizada
+    socket.emit("join success", username);
+
     io.emit("user list", Object.values(usuarios));
   });
 
-  socket.on("escribiendo", (nombre) => {
+
+  socket.on("escribiendo", (nombre)=>{
     socket.broadcast.emit("escribiendo", nombre);
   });
 
-  socket.on("dejoDeEscribir", () => {
+  socket.on("dejoDeEscribir", ()=>{
     socket.broadcast.emit("dejoDeEscribir");
   });
 
-  socket.on("chat message", (data) => {
+  socket.on("chat message", (data)=>{
 
-    // guardar mensaje
     messages.push(data);
 
-    // limitar a últimos 100
-    if(messages.length > 100){
+    if(messages.length>100){
       messages.shift();
     }
 
     io.emit("chat message", data);
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", ()=>{
+
     const username = usuarios[socket.id];
 
     if(username){
@@ -80,6 +92,6 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
+server.listen(PORT, ()=>{
   console.log("Servidor corriendo en puerto " + PORT);
 });

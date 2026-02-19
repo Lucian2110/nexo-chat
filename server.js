@@ -9,30 +9,34 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, "client")));
 
-const activeUsers = new Set(); // 👈 guarda nombres conectados
-
-function sendUserList(){
-  io.emit("user list", Array.from(activeUsers));
-}
+const usuarios = {};   // socket.id -> username
 
 io.on("connection", (socket) => {
 
   socket.on("join", (username) => {
 
-    // si el nombre ya existe → rechazar
-    if(activeUsers.has(username)){
-      socket.emit("name taken");
-      return;
+    const nombreAnterior = usuarios[socket.id];
+
+    // si ya tenía nombre → es cambio de nombre
+    if(nombreAnterior){
+
+      usuarios[socket.id] = username;
+
+      io.emit("system message",
+        nombreAnterior + " ahora se llama " + username
+      );
+
+    }else{
+
+      usuarios[socket.id] = username;
+
+      io.emit("system message",
+        username + " se unió al chat"
+      );
     }
 
-    // aceptar usuario
-    socket.username = username;
-    activeUsers.add(username);
-
-    socket.emit("join success", username);
-    io.emit("system message", username + " se unió al chat");
-
-    sendUserList();
+    // enviar lista actualizada
+    io.emit("user list", Object.values(usuarios));
   });
 
   socket.on("escribiendo", (nombre) => {
@@ -48,10 +52,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    if(socket.username){
-      activeUsers.delete(socket.username);
-      io.emit("system message", socket.username + " salió del chat");
-      sendUserList();
+    const username = usuarios[socket.id];
+
+    if(username){
+      io.emit("system message", username + " salió del chat");
+      delete usuarios[socket.id];
+      io.emit("user list", Object.values(usuarios));
     }
   });
 

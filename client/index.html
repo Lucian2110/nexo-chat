@@ -270,6 +270,7 @@ function sendMessage(){
             text:message
         });
         input.value="";
+        document.querySelector(".channels").classList.remove("open");
     }
 }
 
@@ -351,6 +352,18 @@ socket.on("dejoDeEscribir", ()=>{
 function toggleMenu(){
     document.querySelector(".channels").classList.toggle("open");
 }
+
+// cerrar menú tocando fuera
+document.addEventListener("click", function(e){
+
+    const channels = document.querySelector(".channels");
+    const btn = document.querySelector(".menu-btn");
+
+    if(!channels.contains(e.target) && !btn.contains(e.target)){
+        channels.classList.remove("open");
+    }
+
+});
 
 // recibir historial
 socket.on("chat history", function(history){

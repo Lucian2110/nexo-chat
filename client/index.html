@@ -96,6 +96,11 @@ li{
 
 </div>
 
+<div class="users" style="width:200px;background:#2b2d31;padding:10px;">
+<b>Conectados</b>
+<ul id="users"></ul>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
@@ -191,5 +196,17 @@ socket.on("system message",function(msg){
     const list=document.getElementById("messages");
     list.appendChild(li);
     list.scrollTop=list.scrollHeight;
+});
+
+// lista de usuarios conectados
+socket.on("user list", function(users){
+    const ul=document.getElementById("users");
+    ul.innerHTML="";
+
+    users.forEach(u=>{
+        const li=document.createElement("li");
+        li.textContent=u;
+        ul.appendChild(li);
+    });
 });
 </script>

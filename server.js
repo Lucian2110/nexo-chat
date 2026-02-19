@@ -11,6 +11,10 @@ app.use(express.static(path.join(__dirname, "client")));
 
 const activeUsers = new Set(); // 👈 guarda nombres conectados
 
+function sendUserList(){
+  io.emit("user list", Array.from(activeUsers));
+}
+
 io.on("connection", (socket) => {
 
   socket.on("join", (username) => {
@@ -27,6 +31,8 @@ io.on("connection", (socket) => {
 
     socket.emit("join success", username);
     io.emit("system message", username + " se unió al chat");
+
+    sendUserList();
   });
 
   socket.on("chat message", (data) => {
@@ -37,6 +43,7 @@ io.on("connection", (socket) => {
     if(socket.username){
       activeUsers.delete(socket.username);
       io.emit("system message", socket.username + " salió del chat");
+      sendUserList();
     }
   });
 

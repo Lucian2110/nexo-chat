@@ -43,7 +43,7 @@ io.on("connection", (socket) => {
 
     if(!usuarios[socket.id]){
       usuarios[socket.id]={name:username,channel:"general"};
-      socket.channel="general";   // 🔥 FIX IMPORTANTE
+      socket.channel="general";   // ⭐ ESTA LINEA ES LA CLAVE
       io.emit("system message", username+" se unió al chat");
     }
     else if(anterior!==username){
@@ -72,7 +72,7 @@ io.on("connection", (socket) => {
 
   // TYPING SOLO AL MISMO CANAL
   socket.on("escribiendo",(nombre)=>{
-    const channel = socket.channel || "general";
+    const channel = socket.channel ?? "general";
 
     io.sockets.sockets.forEach(s=>{
       if((s.channel||"general")===channel && s.id!==socket.id){
@@ -82,7 +82,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("dejoDeEscribir",()=>{
-    const channel = socket.channel || "general";
+    const channel = socket.channel ?? "general";
 
     io.sockets.sockets.forEach(s=>{
       if((s.channel||"general")===channel && s.id!==socket.id){
@@ -94,7 +94,7 @@ io.on("connection", (socket) => {
   // MENSAJE
   socket.on("chat message",(data)=>{
 
-    const channel = socket.channel || "general";
+    const channel = socket.channel ?? "general";
 
     const msg = {
       user:data.user,

@@ -114,13 +114,14 @@ io.on("connection", (socket) => {
 
 
   socket.on("disconnect",()=>{
+  socket.on("disconnect",()=>{
 
-    const username = usuarios[socket.id];
+    const user = usuarios[socket.id];
 
-    if(username){
-      io.emit("system message", username+" salió del chat");
+    if(user){
+      io.emit("system message", user.name+" salió del chat");
       delete usuarios[socket.id];
-      io.emit("user list", Object.values(usuarios));
+      enviarUsuarios();
     }
 
   });

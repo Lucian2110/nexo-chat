@@ -234,27 +234,26 @@ li{
 <script>
 let currentChannel = "general";
 const unread = {};
-let audioEnabled = false;
-let audioObj = null;
 
-// activar audio con cualquier interacción real
-["click","keydown","touchstart"].forEach(evt=>{
-    document.addEventListener(evt,()=>{
-        if(!audioEnabled){
-            audioEnabled=true;
-            audioObj=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-            audioObj.volume=0.6;
-        }
-    },{once:true});
-});
+let audioEnabled = false;
 
 function playSound(){
-    if(!audioEnabled || !audioObj) return;
 
-    audioObj.currentTime=0;
+    if(!audioEnabled) return;
 
-    audioObj.play().catch(()=>{});
+    const audio=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    audio.volume=0.6;
+
+    audio.play().catch(()=>{});
+
 }
+
+// activar audio SOLO tras interacción real
+["click","keydown","touchstart"].forEach(evt=>{
+    document.addEventListener(evt,()=>{
+        audioEnabled=true;
+    },{once:true});
+});
 </script>
 
 <script>
@@ -278,7 +277,6 @@ function tryJoin(name){
 
 // intentar entrar al cargar
 tryJoin(username);
-switchChannel("general");
 
 // si el nombre ya existe
 socket.on("name taken", ()=>{
@@ -297,7 +295,9 @@ socket.on("name taken", ()=>{
 socket.on("join success",(name)=>{
     username=name;
     localStorage.setItem("nexo_username",username);
+    switchChannel("general");
 });
+
 
 function sendMessage(){
     const input=document.getElementById("input");
@@ -375,6 +375,10 @@ function switchChannel(channel){
 
     // cerrar menú móvil
     document.querySelector(".channels").classList.remove("open");
+
+    // limpiar indicador de escritura previo
+    const typingDiv = document.getElementById("typing-indicator");
+    if(typingDiv) typingDiv.textContent = "";
 
 }
 

@@ -9,11 +9,23 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, "client")));
 
+const activeUsers = new Set(); // 👈 guarda nombres conectados
+
 io.on("connection", (socket) => {
 
-  // recibir nombre del usuario
   socket.on("join", (username) => {
+
+    // si el nombre ya existe → rechazar
+    if(activeUsers.has(username)){
+      socket.emit("name taken");
+      return;
+    }
+
+    // aceptar usuario
     socket.username = username;
+    activeUsers.add(username);
+
+    socket.emit("join success", username);
     io.emit("system message", username + " se unió al chat");
   });
 
@@ -23,6 +35,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     if(socket.username){
+      activeUsers.delete(socket.username);
       io.emit("system message", socket.username + " salió del chat");
     }
   });

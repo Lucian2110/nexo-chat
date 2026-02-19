@@ -113,8 +113,31 @@ if(!username){
     localStorage.setItem("nexo_username", username);
 }
 
-// avisar al server que entramos
-socket.emit("join", username);
+function tryJoin(name){
+    socket.emit("join", name);
+}
+
+// intentar entrar al cargar
+tryJoin(username);
+
+// si el nombre ya existe
+socket.on("name taken", ()=>{
+    alert("Ese nombre ya está en uso");
+    username=null;
+
+    while(!username){
+        username=prompt("Elegí otro nombre:");
+    }
+
+    localStorage.setItem("nexo_username",username);
+    tryJoin(username);
+});
+
+// si entra bien
+socket.on("join success",(name)=>{
+    username=name;
+    localStorage.setItem("nexo_username",username);
+});
 
 function sendMessage(){
     const input=document.getElementById("input");

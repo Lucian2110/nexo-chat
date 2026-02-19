@@ -235,15 +235,25 @@ li{
 let currentChannel = "general";
 const unread = {};
 let audioEnabled = false;
+let audioObj = null;
 
-document.addEventListener("click",()=>{
-    audioEnabled = true;
-},{once:true});
+// activar audio con cualquier interacción real
+["click","keydown","touchstart"].forEach(evt=>{
+    document.addEventListener(evt,()=>{
+        if(!audioEnabled){
+            audioEnabled=true;
+            audioObj=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+            audioObj.volume=0.6;
+        }
+    },{once:true});
+});
 
 function playSound(){
-    if(!audioEnabled) return;
-    const audio=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-    audio.play().catch(()=>{});
+    if(!audioEnabled || !audioObj) return;
+
+    audioObj.currentTime=0;
+
+    audioObj.play().catch(()=>{});
 }
 </script>
 

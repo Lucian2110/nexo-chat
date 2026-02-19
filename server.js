@@ -9,9 +9,15 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, "client")));
 
+// guardar historial en memoria
+const messages = [];
+
 const usuarios = {};   // socket.id -> username
 
 io.on("connection", (socket) => {
+
+  // enviar historial al nuevo usuario
+  socket.emit("chat history", messages);
 
   socket.on("join", (username) => {
 
@@ -48,6 +54,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("chat message", (data) => {
+
+    // guardar mensaje
+    messages.push(data);
+
+    // limitar a últimos 100
+    if(messages.length > 100){
+      messages.shift();
+    }
+
     io.emit("chat message", data);
   });
 

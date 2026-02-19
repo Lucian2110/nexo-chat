@@ -355,4 +355,26 @@ socket.on("dejoDeEscribir", () => {
 function toggleMenu(){
     document.querySelector(".channels").classList.toggle("open");
 }
+
+// recibir historial
+socket.on("chat history", function(history){
+
+    const ul=document.getElementById("messages");
+    ul.innerHTML="";
+
+    history.forEach(data=>{
+        const li=document.createElement("li");
+
+        if(data.user===username){
+            li.classList.add("me");
+            li.innerHTML=data.text;
+        }else{
+            li.innerHTML="<b>"+data.user+"</b><br>"+data.text;
+        }
+
+        ul.appendChild(li);
+    });
+
+    ul.scrollTop=ul.scrollHeight;
+});
 </script>

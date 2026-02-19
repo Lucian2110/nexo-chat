@@ -196,8 +196,6 @@ li{
     <p onclick="switchChannel('tareas')"># tareas</p>
 </div>
 
-</div>
-
 <div class="chat">
 
 <div class="topbar">
@@ -298,17 +296,23 @@ function changeName(){
     }
 }
 
-function switchChannel(channel){
+function switchChannel(channel) {
 
-    currentChannel = channel;
+      currentChannel = channel;
 
-    document.getElementById("messages").innerHTML="";
+      const topbarSpan = document.getElementById('current-channel');
+      if (topbarSpan) topbarSpan.textContent = channel;
 
-    socket.emit("switch channel", channel);
+      const input = document.getElementById('m');
+      if (input) input.placeholder = 'Escribí en #' + channel;
 
-    document.querySelector(".channels").classList.remove("open");
+      document.getElementById('messages').innerHTML = '';
 
-}
+      socket.emit('switch channel', channel);
+
+      document.querySelector('.channels').classList.remove('open');
+
+    }
 
 // mensaje normal
 socket.on("chat message",function(data){

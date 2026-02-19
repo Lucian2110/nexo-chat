@@ -235,25 +235,33 @@ li{
 let currentChannel = "general";
 const unread = {};
 
+// ===== SONIDO GLOBAL =====
 let audioEnabled = false;
 
-function playSound(){
+const notificationSound = new Audio(
+"https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+);
 
-    if(!audioEnabled) return;
+notificationSound.volume = 0.6;
 
-    const audio=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
-    audio.volume=0.6;
-
-    audio.play().catch(()=>{});
-
+// activar audio tras interacción REAL
+function enableAudio(){
+    audioEnabled = true;
+    document.removeEventListener("click", enableAudio);
+    document.removeEventListener("keydown", enableAudio);
+    document.removeEventListener("touchstart", enableAudio);
 }
 
-// activar audio SOLO tras interacción real
-["click","keydown","touchstart"].forEach(evt=>{
-    document.addEventListener(evt,()=>{
-        audioEnabled=true;
-    },{once:true});
-});
+document.addEventListener("click", enableAudio);
+document.addEventListener("keydown", enableAudio);
+document.addEventListener("touchstart", enableAudio);
+
+function playSound(){
+    if(!audioEnabled) return;
+
+    notificationSound.currentTime = 0;
+    notificationSound.play().catch(()=>{});
+}
 </script>
 
 <script>
@@ -350,48 +358,53 @@ function switchChannel(channel){
 
     currentChannel = channel;
 
-    // un único forEach: limpiar unread + marcar activo
-    unread[channel] = 0;
-    document.querySelectorAll(".channels p").forEach(p=>{
-        const ch = p.dataset.channel;
-        if(ch === channel){
-            p.textContent = "# " + ch;
-            p.classList.add("active");
-        }else{
-            p.classList.remove("active");
-        }
-    });
-
-    document.getElementById("messages").innerHTML = "";
+    document.getElementById("messages").innerHTML="";
 
     socket.emit("switch channel", channel);
 
-    // TOPBAR
-    const span = document.querySelector(".topbar span");
-    if(span) span.textContent = "# " + channel;
+    // actualizar topbar
+    const span=document.querySelector(".topbar span");
+    if(span) span.textContent="# "+channel;
 
-    // PLACEHOLDER
-    document.getElementById("input").placeholder = "Mensaje en #" + channel;
+    // placeholder
+    document.getElementById("input").placeholder="Mensaje en #"+channel;
 
-    // cerrar menú móvil
+    // reset unread del canal actual
+    unread[channel]=0;
+
+    // actualizar lista visual
+    document.querySelectorAll(".channels p").forEach(p=>{
+        const ch=p.dataset.channel;
+
+        if(ch===channel){
+            p.classList.add("active");
+            p.textContent="# "+ch;
+        }else{
+            p.classList.remove("active");
+
+            if(unread[ch]){
+                p.textContent="# "+ch+" ("+unread[ch]+")";
+            }else{
+                p.textContent="# "+ch;
+            }
+        }
+    });
+
     document.querySelector(".channels").classList.remove("open");
 
-    // limpiar indicador de escritura previo
-    const typingDiv = document.getElementById("typing-indicator");
-    if(typingDiv) typingDiv.textContent = "";
-
+    typingDiv.textContent="";
 }
 
 // mensaje normal
 socket.on("chat message",function(data){
 
-    // mensaje en otro canal
     if(data.channel!==currentChannel){
 
         unread[data.channel]=(unread[data.channel]||0)+1;
 
         document.querySelectorAll(".channels p").forEach(p=>{
             const ch=p.dataset.channel;
+
             if(ch===data.channel){
                 p.textContent="# "+ch+" ("+unread[ch]+")";
             }
@@ -401,7 +414,7 @@ socket.on("chat message",function(data){
         return;
     }
 
-    const li = renderMessage(data, data.user === username);
+    const li = renderMessage(data, data.user===username);
     document.getElementById("messages").appendChild(li);
     li.scrollIntoView();
 });

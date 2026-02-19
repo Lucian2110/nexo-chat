@@ -18,20 +18,17 @@ const channels = {
 const usuarios = {}; // socket.id -> {name, channel}
 
 function enviarUsuarios(){
-
   const porCanal = {};
-
   Object.values(usuarios).forEach(u=>{
     if(!porCanal[u.channel]) porCanal[u.channel]=[];
     porCanal[u.channel].push(u.name);
   });
-
   io.emit("user list",porCanal);
-
 }
 
 io.on("connection", (socket) => {
 
+  // JOIN
   socket.on("join",(username)=>{
 
     username=username.trim();
@@ -46,19 +43,20 @@ io.on("connection", (socket) => {
 
     if(!usuarios[socket.id]){
       usuarios[socket.id]={name:username,channel:"general"};
+      socket.channel="general";   // 🔥 FIX IMPORTANTE
       io.emit("system message", username+" se unió al chat");
-    }else if(anterior!==username){
+    }
+    else if(anterior!==username){
       usuarios[socket.id].name=username;
       io.emit("system message", anterior+" ahora se llama "+username);
     }
 
     socket.emit("join success",username);
-
+    socket.emit("chat history", channels[socket.channel] || []);
     enviarUsuarios();
   });
 
-
-  // cambiar canal
+  // CAMBIAR CANAL
   socket.on("switch channel",(channel)=>{
 
     if(!usuarios[socket.id]) return;
@@ -72,21 +70,28 @@ io.on("connection", (socket) => {
     enviarUsuarios();
   });
 
-  // escribiendo (typing) events per channel
-  socket.on("escribiendo", (nombre) => {
+  // TYPING SOLO AL MISMO CANAL
+  socket.on("escribiendo",(nombre)=>{
     const channel = socket.channel || "general";
-    socket.broadcast.emit("escribiendo", {
-      nombre,
-      channel,
+
+    io.sockets.sockets.forEach(s=>{
+      if((s.channel||"general")===channel && s.id!==socket.id){
+        s.emit("escribiendo",{nombre,channel});
+      }
     });
   });
 
-  socket.on("dejoDeEscribir", () => {
+  socket.on("dejoDeEscribir",()=>{
     const channel = socket.channel || "general";
-    socket.broadcast.emit("dejoDeEscribir", channel);
+
+    io.sockets.sockets.forEach(s=>{
+      if((s.channel||"general")===channel && s.id!==socket.id){
+        s.emit("dejoDeEscribir",channel);
+      }
+    });
   });
 
-
+  // MENSAJE
   socket.on("chat message",(data)=>{
 
     const channel = socket.channel || "general";
@@ -103,7 +108,6 @@ io.on("connection", (socket) => {
       channels[channel].shift();
     }
 
-    // enviar SOLO a los que están en ese canal
     io.sockets.sockets.forEach(s=>{
       if((s.channel||"general")===channel){
         s.emit("chat message",msg);
@@ -112,7 +116,7 @@ io.on("connection", (socket) => {
 
   });
 
-
+  // DESCONECTAR
   socket.on("disconnect",()=>{
 
     const user = usuarios[socket.id];

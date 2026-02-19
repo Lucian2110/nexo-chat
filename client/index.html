@@ -123,14 +123,23 @@ function sendMessage(){
 }
 
 function handleKey(e){
-    if(e.key==="Enter") sendMessage();
+    if(e.key==="Enter"){
+        e.preventDefault();
+        sendMessage();
+    }
 }
 
 // mensaje normal
 socket.on("chat message",function(data){
     const li=document.createElement("li");
-    li.innerHTML="<b>"+data.user+"</b>: "+data.text;
-    document.getElementById("messages").appendChild(li);
+    const name=document.createElement("b");
+    name.textContent=data.user+": ";
+    li.appendChild(name);
+    li.appendChild(document.createTextNode(data.text));
+
+    const list=document.getElementById("messages");
+    list.appendChild(li);
+    list.scrollTop=list.scrollHeight;
 });
 
 // mensaje sistema
@@ -139,6 +148,8 @@ socket.on("system message",function(msg){
     li.style.color="#aaa";
     li.style.fontStyle="italic";
     li.textContent=msg;
-    document.getElementById("messages").appendChild(li);
+    const list=document.getElementById("messages");
+    list.appendChild(li);
+    list.scrollTop=list.scrollHeight;
 });
 </script>

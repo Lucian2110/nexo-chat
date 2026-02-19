@@ -191,7 +191,11 @@ li{
 <div class="channels">
 <b>Nexo</b>
 <button onclick="changeName()">Cambiar nombre</button>
-<p># general</p>
+    <p onclick="switchChannel('general')"># general</p>
+    <p onclick="switchChannel('gaming')"># gaming</p>
+    <p onclick="switchChannel('tareas')"># tareas</p>
+</div>
+
 </div>
 
 <div class="chat">
@@ -218,6 +222,7 @@ li{
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script>let currentChannel = "general";</script>
 
 <script>
 const socket = io();
@@ -240,6 +245,7 @@ function tryJoin(name){
 
 // intentar entrar al cargar
 tryJoin(username);
+socket.emit("switch channel","general");
 
 // si el nombre ya existe
 socket.on("name taken", ()=>{
@@ -267,7 +273,8 @@ function sendMessage(){
     if(message){
         socket.emit("chat message",{
             user:username,
-            text:message
+            text:message,
+            channel:currentChannel
         });
         input.value="";
         document.querySelector(".channels").classList.remove("open");
@@ -291,8 +298,21 @@ function changeName(){
     }
 }
 
+function switchChannel(channel){
+
+    currentChannel = channel;
+
+    document.getElementById("messages").innerHTML="";
+
+    socket.emit("switch channel", channel);
+
+    document.querySelector(".channels").classList.remove("open");
+
+}
+
 // mensaje normal
 socket.on("chat message",function(data){
+    if(data.channel!==currentChannel) return;
     const li=document.createElement("li");
 
     if(data.user===username){

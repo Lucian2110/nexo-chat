@@ -231,7 +231,21 @@ li{
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script>let currentChannel = "general"; const unread={}; const audio=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");</script>
+<script>
+let currentChannel = "general";
+const unread = {};
+let audioEnabled = false;
+
+document.addEventListener("click",()=>{
+    audioEnabled = true;
+},{once:true});
+
+function playSound(){
+    if(!audioEnabled) return;
+    const audio=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+    audio.play().catch(()=>{});
+}
+</script>
 
 <script>
 const socket = io();
@@ -311,6 +325,15 @@ function switchChannel(channel){
 
     currentChannel = channel;
 
+    // limpiar contador de no leídos al entrar
+    unread[channel]=0;
+    document.querySelectorAll(".channels p").forEach(p=>{
+        const ch=p.dataset.channel;
+        if(ch===channel){
+            p.textContent="# "+ch;
+        }
+    });
+
     document.getElementById("messages").innerHTML="";
 
     socket.emit("switch channel", channel);
@@ -348,19 +371,20 @@ function switchChannel(channel){
 // mensaje normal
 socket.on("chat message",function(data){
 
+    // mensaje en otro canal
     if(data.channel!==currentChannel){
 
         unread[data.channel]=(unread[data.channel]||0)+1;
 
-        // badge visual
         document.querySelectorAll(".channels p").forEach(p=>{
-            if(p.dataset.channel===data.channel){
-                p.textContent="# "+data.channel+" ("+unread[data.channel]+")";
+            const ch=p.dataset.channel;
+
+            if(ch===data.channel){
+                p.textContent="# "+ch+" ("+unread[ch]+")";
             }
         });
 
-        // sonido
-        audio.play().catch(()=>{});
+        playSound();
         return;
     }
 
@@ -375,7 +399,6 @@ socket.on("chat message",function(data){
 
     document.getElementById("messages").appendChild(li);
     li.scrollIntoView();
-
 });
 
 // mensaje sistema

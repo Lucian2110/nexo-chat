@@ -28,6 +28,17 @@ body{
     padding:10px;
 }
 
+.channels p{
+    padding:8px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.channels p.active{
+    background:#404249;
+    font-weight:bold;
+}
+
 /* chat */
 .chat{
     flex:1;
@@ -243,7 +254,7 @@ function tryJoin(name){
 
 // intentar entrar al cargar
 tryJoin(username);
-socket.emit("switch channel","general");
+switchChannel("general");
 
 // si el nombre ya existe
 socket.on("name taken", ()=>{
@@ -296,23 +307,33 @@ function changeName(){
     }
 }
 
-function switchChannel(channel) {
+function switchChannel(channel){
 
-      currentChannel = channel;
+    currentChannel = channel;
 
-      const topbarSpan = document.getElementById('current-channel');
-      if (topbarSpan) topbarSpan.textContent = channel;
+    document.getElementById("messages").innerHTML="";
 
-      const input = document.getElementById('m');
-      if (input) input.placeholder = 'Escribí en #' + channel;
+    socket.emit("switch channel", channel);
 
-      document.getElementById('messages').innerHTML = '';
+    // actualizar texto arriba (ARREGLA EL TELEFONO)
+    const topSpan = document.querySelector(".topbar span");
+    if(topSpan) topSpan.textContent = "# " + channel;
 
-      socket.emit('switch channel', channel);
+    // actualizar placeholder
+    document.getElementById("input").placeholder = "Mensaje en #" + channel;
 
-      document.querySelector('.channels').classList.remove('open');
+    // ===== marcar canal activo =====
+    document.querySelectorAll(".channels p").forEach(p=>{
+        p.classList.remove("active");
+    });
 
-    }
+    const active = document.querySelector(`.channels p[onclick="switchChannel('${channel}')"]`);
+    if(active) active.classList.add("active");
+
+    // cerrar menú móvil
+    document.querySelector(".channels").classList.remove("open");
+
+}
 
 // mensaje normal
 socket.on("chat message",function(data){
